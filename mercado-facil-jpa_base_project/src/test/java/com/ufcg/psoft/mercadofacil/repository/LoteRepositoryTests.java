@@ -16,67 +16,174 @@ import static org.junit.jupiter.api.Assertions.*;
 class LoteRepositoryTests {
 
     @Autowired
-    LoteRepository driver;
+    VolatilLoteRepository driver;
+
 
     Lote lote;
+    Lote resultado;
     Produto produto;
 
+
     @BeforeEach
-    void setUp() {
+    void setup() {
         produto = Produto.builder()
+                .id(1L)
                 .nome("Produto Base")
                 .codigoDeBarras("123456789")
                 .fabricante("Fabricante Base")
-                .preco(100.00)
+                .preco(125.36)
                 .build();
         lote = Lote.builder()
-                .produto(produto)
+                .id(1L)
                 .numeroDeItens(100)
+                .produto(produto)
                 .build();
     }
+
 
     @AfterEach
     void tearDown() {
+        produto = null;
         driver.deleteAll();
     }
 
-    @Test
-    @DisplayName("Inserir o primeiro lote de produtos no banco de dados")
-    void inserirPrimeiroLoteNoBD() {
-        // Arrange
-        driver.deleteAll();
-        // Act
-        Lote resultado = driver.save(lote);
-        // Assert
-        assertNotNull(resultado);
-        assertEquals(1, driver.findAll().size());
-        assertEquals(produto, resultado.getProduto());
-    }
 
     @Test
-    @DisplayName("Inserir o segudo ou posterior lote de produtos no banco")
-    void inserirSegundoOuPosteriorLoteDeProdutosNoBanco() {
-        // Arrange
-        driver.deleteAll();
-        Produto produto2 = Produto.builder()
-                .nome("Produto Dois")
+    @DisplayName("Adicionar o primeiro Lote no repositorio de dados")
+    void salvarPrimeiroLote() {
+        resultado = driver.save(lote);
+
+
+        assertEquals(driver.findAll().size(),1);
+        assertEquals(resultado.getId().longValue(), lote.getId().longValue());
+        assertEquals(resultado.getProduto(), produto);
+    }
+
+
+    @Test
+    @DisplayName("Adicionar o segundo Lote (ou posterior) no repositorio de dados")
+    void salvarSegundoLoteOuPosterior() {
+        Produto produtoExtra = Produto.builder()
+                .id(2L)
+                .nome("Produto Extra")
                 .codigoDeBarras("987654321")
-                .fabricante("Fabricante Dois")
-                .preco(200.00)
+                .fabricante("Fabricante Extra")
+                .preco(125.36)
                 .build();
-        Lote lote2 = Lote.builder()
-                .produto(produto2)
-                .numeroDeItens(200)
+        Lote loteExtra = Lote.builder()
+                .id(2L)
+                .numeroDeItens(100)
+                .produto(produtoExtra)
                 .build();
         driver.save(lote);
 
-        // Act
-        Lote resultado = driver.save(lote2);
 
-        // Assert
-        assertNotNull(resultado);
-        assertEquals(2, driver.findAll().size());
-        assertEquals(produto2, resultado.getProduto());
+        resultado = driver.save(loteExtra);
+
+
+        assertEquals(driver.findAll().size(),2);
+        assertEquals(resultado.getId().longValue(), loteExtra.getId().longValue());
+        assertEquals(resultado.getProduto(), produtoExtra);
+
+
+    }
+
+    @Test
+    void findTest() {
+        Produto produtoExtra = Produto.builder()
+                .id(2L)
+                .nome("Produto Extra")
+                .codigoDeBarras("987654321")
+                .fabricante("Fabricante Extra")
+                .preco(125.36)
+                .build();
+        Lote loteExtra = Lote.builder()
+                .id(2L)
+                .numeroDeItens(100)
+                .produto(produtoExtra)
+                .build();
+
+        driver.save(lote);
+        driver.save(loteExtra);
+
+
+        assertEquals((driver.find(lote.getId()).getId()), lote.getId());
+        assertEquals((driver.find(loteExtra.getId()).getId()), loteExtra.getId());
+
+
+    }
+
+
+    @Test
+    @DisplayName("Update no �nico Lote no repositorio de dados")
+    void updatePrimeiroLote() {
+        driver.save(lote);
+        resultado = driver.update(lote);
+
+
+        assertEquals(driver.findAll().size(),1);
+        assertEquals(resultado.getId().longValue(), lote.getId().longValue());
+    }
+
+    @Test
+    @DisplayName("Update no segundo Lote (ou posterior) no repositorio de dados")
+    void updateSegundoLoteOuPosterior() {
+        Produto produtoExtra = Produto.builder()
+                .id(2L)
+                .nome("Produto Extra")
+                .codigoDeBarras("987654321")
+                .fabricante("Fabricante Extra")
+                .preco(125.36)
+                .build();
+        Lote loteExtra = Lote.builder()
+                .id(2L)
+                .numeroDeItens(100)
+                .produto(produtoExtra)
+                .build();
+
+        driver.save(lote);
+        driver.save(loteExtra);
+        resultado = driver.update(loteExtra);
+
+        assertEquals(driver.findAll().size(),2);
+        assertEquals(resultado.getId().longValue(), lote.getId().longValue());
+        assertEquals(resultado.getProduto(), produto);
+
+
+    }
+
+    @Test
+    @DisplayName("Deletar o �nico Lote no repositorio de dados")
+    void deletePrimeiroLote() {
+        driver.save(lote);
+        driver.delete(lote);
+
+        assertEquals(driver.findAll().size(), 0);
+    }
+
+    @Test
+    @DisplayName("Deletar o segundo Lote (ou posterior) no repositorio de dados")
+    void deleteSegundoLoteOuPosterior() {
+        Produto produtoExtra = Produto.builder()
+                .id(2L)
+                .nome("Produto Extra")
+                .codigoDeBarras("987654321")
+                .fabricante("Fabricante Extra")
+                .preco(125.36)
+                .build();
+        Lote loteExtra = Lote.builder()
+                .id(2L)
+                .numeroDeItens(100)
+                .produto(produtoExtra)
+                .build();
+
+        resultado = driver.save(lote);
+        driver.save(loteExtra);
+        driver.delete(loteExtra);
+
+
+        assertEquals(driver.findAll().size(), 1);
+        assertEquals(resultado.getId().longValue(), lote.getId().longValue());
 
     }
 
